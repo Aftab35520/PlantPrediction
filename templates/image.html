@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="https://th.bing.com/th/id/OIP.dptlnUndDO4T3SOyUT9fCgAAAA?w=200&h=200&c=7&r=0&o=5&pid=1.7">
+    <title>Leaf Condition Prediction</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+      }
+
+      .title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #333;
+      }
+
+      .container {
+        width: 80%;
+        max-width: 400px;
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        background-color: white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease; /* Smooth transition for resizing */
+      }
+
+      /* Adjust container size for larger screens (PC) */
+      @media (min-width: 768px) {
+        .container {
+          max-width: 600px; /* 1.5x larger width for screens larger than 768px */
+          padding: 30px; /* Adjust padding if needed */
+        }
+      }
+
+      input[type="file"] {
+        margin-bottom: 20px;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      input[type="file"]:hover {
+        background-color: #0056b3;
+      }
+
+      button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+        padding: 10px;
+        display: none;
+      }
+
+      button:hover {
+        background-color: #218838;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        margin-top: 20px;
+      }
+
+      .text-tag {
+        margin-top: 20px;
+        font-size: 18px;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="title">Leaves Condition Prediction</div>
+
+    <div class="container">
+      <input
+        type="file"
+        id="imageInput"
+        accept="image/*"
+        onchange="showImage(event)"
+      />
+      <div id="imageContainer"></div>
+     
+      <button id="submitButton" onclick="submitForm()">Predict</button>
+      <div class="text-tag" id="textTag"></div>
+    </div>
+
+    <script>
+      let uploadedImage = null;
+
+      function showImage(event) {
+        const imageContainer = document.getElementById("imageContainer");
+        const textTag = document.getElementById("textTag");
+        const submitButton = document.getElementById("submitButton");
+
+        // Clear previous content
+        imageContainer.innerHTML = "";
+        textTag.textContent = "";
+
+        const file = event.target.files[0];
+
+        if (file) {
+          // Create image element
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(file);
+          imageContainer.appendChild(img);
+
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            uploadedImage = e.target.result;
+          };
+          reader.readAsDataURL(file);
+
+          submitButton.style.display = "block";
+        } else {
+          textTag.textContent = "No image selected.";
+          submitButton.style.display = "none";
+        }
+      }
+
+      async function submitForm() {
+        if (uploadedImage) {
+          await fetch("http://127.0.0.1:5000", {
+            method: "POST",
+            body: JSON.stringify({ TextImg: uploadedImage }),
+            headers: {
+              "Content-type": "application/json",
+            },
+          })
+            .then(async (res) => await res.json())
+            .then((data) => {
+              if (data.prediction == 0) {
+                textTag.textContent = "Normal";
+                textTag.style.color = "green"
+              } else if (data.prediction == 1) {
+                textTag.textContent = "Powdery";
+                textTag.style.color = "brown"
+              } else if (data.prediction == 2) {
+                textTag.textContent = "Rust";
+                textTag.style.color = "red"
+              }
+            })
+            .catch((err) => console.log(err));
+        } else {
+          alert("Please upload an image first.");
+        }
+      }
+    </script>
+  </body>
+</html>
